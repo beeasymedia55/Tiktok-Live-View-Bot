@@ -8,7 +8,7 @@ from http import cookiejar
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 from html5lib import *
-
+from user_agent import generate_user_agent
 
 System.Title("[TikTok Ultimate Bot] DBTechLabs.com")
 def Banner():
@@ -64,7 +64,34 @@ __dpi = ["240", "300"]
 
 
 class Gorgon:
-	"IF you WANT the REST of the CODE please contact me on Telegram."
+	def __init__(self,params:str,data:str,cookies:str,unix:int)->None:self.unix=unix;self.params=params;self.data=data;self.cookies=cookies
+	def hash(self,data:str)->str:
+		try:_hash=str(hashlib.md5(data.encode()).hexdigest())
+		except Exception:_hash=str(hashlib.md5(data).hexdigest())
+		return _hash
+	def get_base_string(self)->str:base_str=self.hash(self.params);base_str=base_str+self.hash(self.data)if self.data else base_str+str('0'*32);base_str=base_str+self.hash(self.cookies)if self.cookies else base_str+str('0'*32);return base_str
+	def get_value(self)->json:base_str=self.get_base_string();return self.encrypt(base_str)
+	def encrypt(self,data:str)->json:
+		unix=self.unix;len=20;key=[223,119,185,64,185,155,132,131,209,185,203,209,247,194,185,133,195,208,251,195];param_list=[]
+		for i in range(0,12,4):
+			temp=data[8*i:8*(i+1)]
+			for j in range(4):H=int(temp[j*2:(j+1)*2],16);param_list.append(H)
+		param_list.extend([0,6,11,28]);H=int(hex(unix),16);param_list.append((H&4278190080)>>24);param_list.append((H&16711680)>>16);param_list.append((H&65280)>>8);param_list.append((H&255)>>0);eor_result_list=[]
+		for (A,B) in zip(param_list,key):eor_result_list.append(A^B)
+		for i in range(len):C=self.reverse(eor_result_list[i]);D=eor_result_list[(i+1)%len];E=C^D;F=self.rbit_algorithm(E);H=(F^4294967295^len)&255;eor_result_list[i]=H
+		result=''
+		for param in eor_result_list:result+=self.hex_string(param)
+		return{'X-Gorgon':'0404b0d30000'+result,'X-Khronos':str(unix)}
+	def rbit_algorithm(self,num):
+		result='';tmp_string=bin(num)[2:]
+		while len(tmp_string)<8:tmp_string='0'+tmp_string
+		for i in range(0,8):result=result+tmp_string[7-i]
+		return int(result,2)
+	def hex_string(self,num):
+		tmp_string=hex(num)[2:]
+		if len(tmp_string)<2:tmp_string='0'+tmp_string
+		return tmp_string
+	def reverse(self,num):tmp_string=self.hex_string(num);return int(tmp_string[1:]+tmp_string[:1],16)
 
 def sendViewsTest(__device_id, __install_id, cdid, openudid):
     global reqs, _lock, success, fails, rps, rpm
